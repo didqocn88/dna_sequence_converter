@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA 서열 변환기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+body {
+    background: #e3f2fd;  /* 연한 파랑 */
+}
+
+.type-btn.active {
+    background: #e3f2fd;  /* 배경이랑 똑같은 색 */
+    color: #2196F3;  /* 글씨는 진한 파랑 */
+    border-color: #2196F3;  /* 테두리는 진한 파랑 */
+    font-weight: bold;  /* 강조 */
+}
+
+.convert-btn {
+    background: #e3f2fd;  /* 배경이랑 똑같은 색 */
+    color: #2196F3;  /* 글씨는 진한 파랑 */
+    border: 2px solid #2196F3;  /* 테두리 추가 */
+}
+
+.convert-btn:hover {
+    background: #2196F3;  /* 호버하면 진하게 */
+    color: white;
+}
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .type-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .type-btn.active {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            resize: vertical;
+        }
+
+        .convert-btn {
+            width: 100%;
+            padding: 15px;
+            background: white;
+            color: black;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .convert-btn:hover {
+            background: #2196F3;
+            color: white;
+        }
+
+        .results {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .strand-visual {
+            margin: 30px 0;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+
+        .strand-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .strand-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            margin-bottom: 5px;
+        }
+
+        .base {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+            min-width: 40px;
+        }
+
+.base.A { background: #FF6B6B; color: #fff; }
+.base.T { background: #4ECDC4; color: #fff; }
+.base.G { background: #45B7D1; color: #fff; }
+.base.C { background: #FFA07A; color: #fff; }
+.base.U { background: #95A5D6; color: #fff; }
+
+        .complement-line {
+            text-align: center;
+            color: #999;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        .codon-group {
+            display: inline-flex;
+            gap: 2px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 2px;
+        }
+
+        .protein-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            border: 2px solid #2196F3;
+        }
+
+        .amino-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .amino-acid {
+            padding: 10px 15px;
+            background: #fff;
+            border: 2px solid #2196F3;;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #010f96
+        }
+
+        .direction {
+            font-size: 16px;
+            color: #999;
+            margin-left: 10px;
+        }
+
+        .arrow-down {
+            text-align: center;
+            font-size: 16px;
+            color: #999;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 600px) {
+            .type-buttons {
+                flex-direction: column;
+            }
+            .base {
+                min-width: 35px;
+                padding: 6px 8px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DNA 서열 변환기</h1>
+
+        <div class="input-section">
+            <label>입력 유형 선택:</label>
+            <div class="type-buttons">
+                <button class="type-btn active" onclick="selectType('template')">주형가닥 (3'→5')</button>
+                <button class="type-btn" onclick="selectType('nontemplate')">비주형가닥 (5'→3')</button>
+                <button class="type-btn" onclick="selectType('codon')">코돈 (mRNA)</button>
+            </div>
+
+            <label>서열 입력:</label>
+            <textarea id="sequence" rows="3" placeholder="예: ATGCGATCG"></textarea>
+
+            <button class="convert-btn" onclick="convertSequence()">변환하기</button>
+        </div>
+
+        <div class="results" id="results">
+            <div class="strand-visual">
+                <div class="strand-label">주형가닥 (Template Strand) <span class="direction">3' → 5'</span></div>
+                <div class="strand-container" id="templateVisual"></div>
+            </div>
+
+            <div class="complement-line">(수소결합)</div>
+
+            <div class="strand-visual">
+                <div class="strand-label">비주형가닥 (Non-template Strand) <span class="direction">5' → 3'</span></div>
+                <div class="strand-container" id="nontemplateVisual"></div>
+            </div>
+
+            <div class="arrow-down">↓ 전사 (Transcription)</div>
+
+            <div class="strand-visual">
+                <div class="strand-label">코돈 (mRNA) <span class="direction">5' → 3'</span></div>
+                <div id="codonVisual"></div>
+            </div>
+
+            <div class="arrow-down">↓ 번역 (Translation)</div>
+
+            <div class="protein-section">
+                <div class="strand-label">아미노산 서열 (Protein)</div>
+                <div class="amino-container" id="proteinVisual"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentType = 'template';
+
+        const codonTable = {
+            'UUU': 'Phe', 'UUC': 'Phe', 'UUA': 'Leu', 'UUG': 'Leu',
+            'UCU': 'Ser', 'UCC': 'Ser', 'UCA': 'Ser', 'UCG': 'Ser',
+            'UAU': 'Tyr', 'UAC': 'Tyr', 'UAA': 'STOP', 'UAG': 'STOP',
+            'UGU': 'Cys', 'UGC': 'Cys', 'UGA': 'STOP', 'UGG': 'Trp',
+            'CUU': 'Leu', 'CUC': 'Leu', 'CUA': 'Leu', 'CUG': 'Leu',
+            'CCU': 'Pro', 'CCC': 'Pro', 'CCA': 'Pro', 'CCG': 'Pro',
+            'CAU': 'His', 'CAC': 'His', 'CAA': 'Gln', 'CAG': 'Gln',
+            'CGU': 'Arg', 'CGC': 'Arg', 'CGA': 'Arg', 'CGG': 'Arg',
+            'AUU': 'Ile', 'AUC': 'Ile', 'AUA': 'Ile', 'AUG': 'Met',
+            'ACU': 'Thr', 'ACC': 'Thr', 'ACA': 'Thr', 'ACG': 'Thr',
+            'AAU': 'Asn', 'AAC': 'Asn', 'AAA': 'Lys', 'AAG': 'Lys',
+            'AGU': 'Ser', 'AGC': 'Ser', 'AGA': 'Arg', 'AGG': 'Arg',
+            'GUU': 'Val', 'GUC': 'Val', 'GUA': 'Val', 'GUG': 'Val',
+            'GCU': 'Ala', 'GCC': 'Ala', 'GCA': 'Ala', 'GCG': 'Ala',
+            'GAU': 'Asp', 'GAC': 'Asp', 'GAA': 'Glu', 'GAG': 'Glu',
+            'GGU': 'Gly', 'GGC': 'Gly', 'GGA': 'Gly', 'GGG': 'Gly'
+        };
+
+        function selectType(type) {
+            currentType = type;
+            const buttons = document.querySelectorAll('.type-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function complement(base) {
+            const map = { 'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G' };
+            return map[base] || base;
+        }
+
+        function reverseComplement(seq) {
+            return seq.split('').reverse().map(complement).join('');
+        }
+
+        function transcribe(dna) {
+            return dna.replace(/T/g, 'U');
+        }
+
+        function translate(rna) {
+            const aminoAcids = [];
+            for (let i = 0; i < rna.length; i += 3) {
+                const codon = rna.substr(i, 3);
+                if (codon.length === 3) {
+                    aminoAcids.push(codonTable[codon] || 'X');
+                }
+            }
+            return aminoAcids;
+        }
+
+        function createBaseElements(sequence, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (let base of sequence) {
+                const baseDiv = document.createElement('div');
+                baseDiv.className = `base ${base}`;
+                baseDiv.textContent = base;
+                container.appendChild(baseDiv);
+            }
+        }
+
+        function createCodonElements(sequence, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (let i = 0; i < sequence.length; i += 3) {
+                const codon = sequence.substr(i, 3);
+                if (codon.length === 3) {
+                    const codonGroup = document.createElement('div');
+                    codonGroup.className = 'codon-group';
+                    for (let base of codon) {
+                        const baseDiv = document.createElement('div');
+                        baseDiv.className = `base ${base}`;
+                        baseDiv.textContent = base;
+                        codonGroup.appendChild(baseDiv);
+                    }
+                    container.appendChild(codonGroup);
+                }
+            }
+        }
+
+        function createProteinElements(aminoAcids, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (let aa of aminoAcids) {
+                const aaDiv = document.createElement('div');
+                aaDiv.className = 'amino-acid';
+                aaDiv.textContent = aa;
+                container.appendChild(aaDiv);
+            }
+        }
+
+function convertSequence() {
+    const sequence = document.getElementById('sequence').value.toUpperCase().trim();
+    
+    if (sequence.length === 0) {
+        alert('서열을 입력해주세요!');
+        return;
+    }
+
+    // 입력 타입에 따라 허용되는 문자 체크
+    let allowedChars;
+    let errorMsg;
+    
+    if (currentType === 'codon') {
+        allowedChars = /^[AUCG]+$/;
+        errorMsg = '코돈은 A, U, C, G만 입력 가능합니다!';
+    } else {
+        allowedChars = /^[ATCG]+$/;
+        errorMsg = 'DNA 서열은 A, T, C, G만 입력 가능합니다!';
+    }
+    
+    if (!allowedChars.test(sequence)) {
+        alert(errorMsg);
+        return;
+    }
+
+    const cleanSeq = sequence;
+            let template, nonTemplate, codingRNA;
+
+            if (currentType === 'template') {
+                template = cleanSeq;
+                nonTemplate = reverseComplement(template);
+                codingRNA = transcribe(nonTemplate);
+            } else if (currentType === 'nontemplate') {
+                nonTemplate = cleanSeq;
+                template = reverseComplement(nonTemplate);
+                codingRNA = transcribe(nonTemplate);
+            } else {
+                codingRNA = cleanSeq.replace(/T/g, 'U');
+                nonTemplate = codingRNA.replace(/U/g, 'T');
+                template = reverseComplement(nonTemplate);
+            }
+
+            const protein = translate(codingRNA);
+
+            createBaseElements(template, 'templateVisual');
+            createBaseElements(nonTemplate, 'nontemplateVisual');
+            createCodonElements(codingRNA, 'codonVisual');
+            createProteinElements(protein, 'proteinVisual');
+
+            document.getElementById('results').classList.add('show');
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+</body>
+</html>
